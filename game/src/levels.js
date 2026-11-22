@@ -57,13 +57,16 @@ export function buildFloor() {
 }
 
 export function buildActors(nightIndex) {
+  // Patrol rectangles are traced against the furniture: every leg
+  // runs in open floor, because a guard's steering only slides along
+  // walls - a waypoint line through a desk or counter strands him.
   const guards = [
-    { waypoints: [[150, 260], [300, 260], [300, 520], [150, 520]], phase: 0 },
-    { waypoints: [[470, 140], [580, 140], [580, 420], [470, 420]], phase: 2 },
+    { waypoints: [[270, 300], [340, 300], [340, 540], [270, 540]], phase: 0 },
+    { waypoints: [[400, 160], [585, 160], [585, 425], [400, 425]], phase: 2 },
     { waypoints: [[660, 520], [880, 520], [880, 420], [660, 420]], phase: 4 },
   ];
   if (nightIndex >= 2) {
-    guards.push({ waypoints: [[250, 90], [560, 90], [560, 200], [250, 200]], phase: 1 });
+    guards.push({ waypoints: [[90, 560], [330, 560], [330, 380], [90, 380]], phase: 1 });
   }
   const cameras = [
     { x: 330, y: 66, base: 0.5, sweep: 0.9, phase: 0 },
@@ -77,8 +80,8 @@ export function buildActors(nightIndex) {
 export function buildLoot(nightIndex) {
   const loot = [
     { id: 'keycard', kind: 'keycard', x: 84, y: 84, value: 0, label: 'KEYCARD' },
-    { id: 'cash1', kind: 'cash', x: 455, y: 196, value: 4000, label: 'CASH' },
-    { id: 'cash2', kind: 'cash', x: 535, y: 336, value: 4000, label: 'CASH' },
+    { id: 'cash1', kind: 'cash', x: 455, y: 166, value: 4000, label: 'CASH' },
+    { id: 'cash2', kind: 'cash', x: 535, y: 306, value: 4000, label: 'CASH' },
     { id: 'gold1', kind: 'gold', x: 660, y: 250, value: 9000, label: 'GOLD' },
     { id: 'gold2', kind: 'gold', x: 250, y: 455, value: 9000, label: 'GOLD' },
     { id: 'diamond', kind: 'diamond', x: 838, y: 232, value: 50000, label: 'AURORA DIAMOND' },

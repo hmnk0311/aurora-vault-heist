@@ -9,7 +9,7 @@ import { createWorld } from './world.js';
 export function shotWorld(name) {
   const world = createWorld(0);
   if (name === 'start') {
-    world.player.x = 180; world.player.y = 470; world.player.facing = 0.4;
+    world.player.x = 205; world.player.y = 480; world.player.facing = 0.4;
     world.message = 'Night 1: cross the lobby. The office keycard is top left.';
     return world;
   }
@@ -40,7 +40,7 @@ export function shotWorld(name) {
     world.lockdown = true;
     world.seenNow = true;
     world.guards[2].state = 'chase';
-    world.guards[2].x = 700; world.guards[2].y = 360;
+    world.guards[2].x = 688; world.guards[2].y = 348;
     world.message = 'SEEN at the laser line! Break line of sight or the meter fills.';
     return world;
   }

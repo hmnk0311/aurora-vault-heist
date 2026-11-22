@@ -145,7 +145,21 @@ export function updateWorld(world, input, dt) {
       item.taken = true;
       world.haul += item.value;
       if (item.kind === 'keycard') { world.hasKeycard = true; world.message = 'Keycard lifted. The vault door will open for you now.'; }
-      else if (item.kind === 'diamond') { world.hasDiamond = true; world.message = 'THE AURORA DIAMOND IS YOURS. Get to the van!'; }
+      else if (item.kind === 'diamond') {
+        world.hasDiamond = true;
+        // The pedestal was wired: lifting the diamond costs alarm and
+        // pulls the nearest guard to the vault door. The run back to
+        // the van is the loudest part of the job, by design.
+        world.alarm = Math.min(ALARM_MAX, world.alarm + 10);
+        let nearest = null;
+        let best = Infinity;
+        for (const g of world.guards) {
+          const d = Math.hypot(g.x - VAULT_DOOR.x, g.y - VAULT_DOOR.y);
+          if (d < best) { best = d; nearest = g; }
+        }
+        if (nearest) hearNoise(nearest, VAULT_DOOR.x - 40, VAULT_DOOR.y + 45);
+        world.message = 'THE DIAMOND IS YOURS - but the pedestal was wired (+10 alarm). RUN!';
+      }
       else world.message = `${item.label} bagged: $${item.value.toLocaleString()}`;
     }
   }
@@ -222,8 +236,14 @@ function startWork(world, kind, seconds) {
 function updateWork(world, input, dt) {
   const p = world.player;
   if (!input.interact()) { world.workKind = null; world.workLeft = 0; return; }
-  const nearTerminal = Math.abs(p.x - (TERMINAL.x + 22)) < 52 && Math.abs(p.y - (TERMINAL.y + 44)) < 52;
-  const nearVault = Math.abs(p.x - (VAULT_DOOR.x - 18)) < 44 && Math.abs(p.y - (VAULT_DOOR.y + 45)) < 70;
+  // Work means standing still at the fixture, in the open: moving off
+  // cancels the job, and no hacking through a wall.
+  const mv = input.moveVector();
+  if (mv.x !== 0 || mv.y !== 0) { world.workKind = null; world.workLeft = 0; return; }
+  const nearTerminal = Math.abs(p.x - (TERMINAL.x + 22)) < 52 && Math.abs(p.y - (TERMINAL.y + 44)) < 52 &&
+    hasLineOfSight(p.x, p.y, TERMINAL.x + 22, TERMINAL.y + 13, world.blockers);
+  const nearVault = Math.abs(p.x - (VAULT_DOOR.x - 18)) < 44 && Math.abs(p.y - (VAULT_DOOR.y + 45)) < 70 &&
+    hasLineOfSight(p.x, p.y, VAULT_DOOR.x, VAULT_DOOR.y + 45, world.blockers);
   if (nearTerminal && !world.lasersOff) {
     startWork(world, 'hack', HACK_SECONDS);
     world.workLeft -= dt;

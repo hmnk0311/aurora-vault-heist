@@ -3,7 +3,7 @@
 // amber guard cones, red camera cones, teal shadow you can hide in,
 // and a scarlet laser line you cross at your peril.
 
-import { VIEW_W, VIEW_H, HUD_H, ALARM_MAX } from './config.js';
+import { VIEW_W, VIEW_H, HUD_H, ALARM_MAX, HACK_SECONDS, VAULT_SECONDS, NIGHTS } from './config.js';
 import { TERMINAL, VAULT_DOOR, LASER_LINE, EXIT_PAD } from './levels.js';
 import { conePolygon } from './vision.js';
 
@@ -33,6 +33,9 @@ function drawHud(ctx, world) {
   ctx.fillStyle = '#f5d76e';
   ctx.font = 'bold 19px system-ui, sans-serif';
   ctx.fillText('AURORA VAULT HEIST', 14, 32);
+  ctx.fillStyle = '#8fa3c8';
+  ctx.font = 'bold 11px system-ui, sans-serif';
+  ctx.fillText(`NIGHT ${world.nightIndex + 1}/${NIGHTS.length}`, 14, 47);
   ctx.fillStyle = '#cfe3ff';
   ctx.font = '14px system-ui, sans-serif';
   ctx.fillText(`Haul $${world.haul.toLocaleString()}`, 250, 32);
@@ -129,10 +132,22 @@ function drawZones(ctx, world) {
   ctx.fillRect(EXIT_PAD.x, EXIT_PAD.y, EXIT_PAD.w, EXIT_PAD.h);
   ctx.strokeStyle = '#2ed573';
   ctx.strokeRect(EXIT_PAD.x, EXIT_PAD.y, EXIT_PAD.w, EXIT_PAD.h);
+  // The getaway van, side-on: body, cab, windshield and wheels, so
+  // the exit reads as a vehicle and not a labelled rectangle.
+  const vx = EXIT_PAD.x + 6;
+  const vy = EXIT_PAD.y + 10;
+  ctx.fillStyle = '#2c3e50';
+  ctx.fillRect(vx, vy, 72, 30);
+  ctx.fillStyle = '#85c1e9';
+  ctx.fillRect(vx + 52, vy + 5, 14, 10);
+  ctx.fillStyle = '#f5d76e';
+  ctx.fillRect(vx + 68, vy + 18, 4, 6);
+  ctx.fillStyle = '#10162e';
+  ctx.beginPath(); ctx.arc(vx + 16, vy + 32, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(vx + 56, vy + 32, 7, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#dff5e6';
-  ctx.font = 'bold 11px system-ui, sans-serif';
-  ctx.fillText('GETAWAY', EXIT_PAD.x + 8, EXIT_PAD.y + 22);
-  ctx.fillText('VAN', EXIT_PAD.x + 8, EXIT_PAD.y + 38);
+  ctx.font = 'bold 10px system-ui, sans-serif';
+  ctx.fillText('GETAWAY VAN', EXIT_PAD.x + 4, EXIT_PAD.y + 8);
 }
 
 function drawFixtures(ctx, world) {
@@ -158,6 +173,20 @@ function drawFixtures(ctx, world) {
   ctx.fillStyle = '#10162e';
   ctx.font = 'bold 10px system-ui, sans-serif';
   ctx.fillText(world.vaultOpen ? 'OPEN' : 'VAULT', VAULT_DOOR.x - 2, VAULT_DOOR.y + 48);
+  // The vault wheel: spokes on the door face.
+  const wx = VAULT_DOOR.x + 13;
+  const wy = VAULT_DOOR.y + 45;
+  ctx.strokeStyle = '#10162e';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(wx, wy, 9, 0, Math.PI * 2); ctx.stroke();
+  for (let i = 0; i < 3; i++) {
+    const a = (Math.PI * i) / 3 + 0.4;
+    ctx.beginPath();
+    ctx.moveTo(wx - Math.cos(a) * 9, wy - Math.sin(a) * 9);
+    ctx.lineTo(wx + Math.cos(a) * 9, wy + Math.sin(a) * 9);
+    ctx.stroke();
+  }
+  ctx.lineWidth = 1;
   // Set dressing: framed art on the gallery wall, gold piles waiting
   // inside the vault, and the bank's name over the lobby counter.
   ctx.fillStyle = '#5b2a86';
@@ -344,8 +373,9 @@ function drawOverlays(ctx, world) {
   ctx.font = '13px system-ui, sans-serif';
   ctx.fillText(world.message, 12, VIEW_H - HUD_H - 10);
   if (world.workKind) {
+    const total = world.workKind === 'hack' ? HACK_SECONDS : VAULT_SECONDS;
     ctx.fillStyle = '#f5d76e';
-    ctx.fillRect(360, 250, 240 * Math.max(0, 1 - world.workLeft / 2.4), 10);
+    ctx.fillRect(360, 250, 240 * Math.max(0, 1 - world.workLeft / total), 10);
     ctx.strokeStyle = '#ffffff';
     ctx.strokeRect(360, 250, 240, 10);
   }

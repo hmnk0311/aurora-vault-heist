@@ -36,13 +36,24 @@ function frame(now) {
     if (before === 'playing' && world.state === 'busted' && !endPlayed) { sfx.busted(); endPlayed = true; }
     if (before === 'playing' && world.state === 'clear' && !endPlayed) { sfx.clear(); endPlayed = true; }
     if ((world.state === 'busted' || world.state === 'clear') && input.takePressed('KeyR')) {
-      if (world.state === 'clear') {
+      if (world.state === 'clear' && night === NIGHTS.length - 1) {
+        // Campaign complete: bank the third night, report the total,
+        // and start a fresh campaign instead of looping Night 3.
         totalHaul += world.haul;
-        night = Math.min(NIGHTS.length - 1, night + 1);
-      }
-      world = createWorld(night);
-      if (night === NIGHTS.length - 1 && totalHaul > 0) {
-        world.message = `${NIGHTS[night].name}. Banked so far: $${totalHaul.toLocaleString()}`;
+        const campaignTotal = totalHaul;
+        totalHaul = 0;
+        night = 0;
+        world = createWorld(0);
+        world.message = `CAMPAIGN COMPLETE - three nights banked: $${campaignTotal.toLocaleString()}. Night 1 again: beat that total.`;
+      } else {
+        if (world.state === 'clear') {
+          totalHaul += world.haul;
+          night += 1;
+        }
+        world = createWorld(night);
+        if (night > 0 && totalHaul > 0) {
+          world.message = `${NIGHTS[night].name}. Banked so far: $${totalHaul.toLocaleString()}`;
+        }
       }
       endPlayed = false;
     }
