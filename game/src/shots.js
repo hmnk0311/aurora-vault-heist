@@ -14,13 +14,22 @@ export function shotWorld(name) {
     return world;
   }
   if (name === 'play') {
-    world.player.x = 470; world.player.y = 285; world.player.facing = 0.1;
+    // Mid-job in the gallery shadow carpet: a decoy coin rings on the
+    // tiles and the gallery guard turns to it ('?' overhead) while the
+    // thief slips past his cone with the keycard already lifted.
+    world.player.x = 505; world.player.y = 272; world.player.facing = 0.1;
+    world.player.tiptoe = true; world.player.inShadow = true;
     world.hasKeycard = true;
     world.loot.find((l) => l.id === 'keycard').taken = true;
     world.loot.find((l) => l.id === 'cash1').taken = true;
     world.haul = 4000;
     world.alarm = 22;
-    world.message = 'In the gallery with the keycard - the terminal is top middle.';
+    world.decoys.push({ x: 548, y: 428, left: 4 });
+    world.guards[1].state = 'investigate';
+    world.guards[1].x = 520; world.guards[1].y = 388;
+    world.guards[1].facing = Math.atan2(428 - 388, 548 - 520);
+    world.guards[1].targetX = 548; world.guards[1].targetY = 428;
+    world.message = 'The coin pulls his eyes. Tiptoe through the shadow carpet.';
     return world;
   }
   if (name === 'alarm') {
@@ -28,6 +37,7 @@ export function shotWorld(name) {
     world.hasKeycard = true; world.lasersOff = false;
     world.loot.find((l) => l.id === 'keycard').taken = true;
     world.alarm = 78;
+    world.lockdown = true;
     world.seenNow = true;
     world.guards[2].state = 'chase';
     world.guards[2].x = 700; world.guards[2].y = 360;
@@ -39,7 +49,7 @@ export function shotWorld(name) {
   world.hasKeycard = true; world.lasersOff = true; world.vaultOpen = true;
   world.hasDiamond = true;
   for (const l of world.loot) l.taken = true;
-  world.haul = 91000;
+  world.haul = 108000;
   world.alarm = 12;
   world.state = 'clear';
   world.endReason = 'Clean getaway. Ghost bonus $15,000.';

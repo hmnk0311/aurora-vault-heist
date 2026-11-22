@@ -45,6 +45,9 @@ function moveToward(g, tx, ty, speed, dt, blockers) {
 
 export function updateGuard(g, dt, world) {
   const blockers = world.blockers;
+  // Lockdown: once the alarm passes the halfway mark the whole patrol
+  // shifts up a gear. The meter warned you the whole way up.
+  const boost = world.lockdown ? 1.22 : 1;
   if (world.seenByGuard === g && world.playerVisibleTo(g)) {
     g.state = 'chase';
     g.targetX = world.player.x;
@@ -52,7 +55,7 @@ export function updateGuard(g, dt, world) {
     g.searchLeft = 3.2;
   }
   if (g.state === 'chase') {
-    if (moveToward(g, g.targetX, g.targetY, GUARD_CHASE * g.speedScale, dt, blockers)) {
+    if (moveToward(g, g.targetX, g.targetY, GUARD_CHASE * g.speedScale * boost, dt, blockers)) {
       g.state = 'search';
     }
     if (!world.playerVisibleTo(g)) {
@@ -64,14 +67,14 @@ export function updateGuard(g, dt, world) {
   if (g.state === 'search') {
     g.searchLeft -= dt;
     g.facing += Math.sin(world.time * 1.7 + g.phase) * dt * 1.9;
-    if (moveToward(g, g.targetX, g.targetY, GUARD_SEARCH * g.speedScale, dt, blockers) && g.searchLeft <= 0) {
+    if (moveToward(g, g.targetX, g.targetY, GUARD_SEARCH * g.speedScale * boost, dt, blockers) && g.searchLeft <= 0) {
       g.state = 'patrol';
     }
     if (g.searchLeft < -2.5) g.state = 'patrol';
     return;
   }
   if (g.state === 'investigate') {
-    if (moveToward(g, g.targetX, g.targetY, GUARD_SEARCH * g.speedScale, dt, blockers)) {
+    if (moveToward(g, g.targetX, g.targetY, GUARD_SEARCH * g.speedScale * boost, dt, blockers)) {
       g.pauseLeft = 1.4;
       g.state = 'look';
     }
@@ -90,7 +93,7 @@ export function updateGuard(g, dt, world) {
     return;
   }
   const [tx, ty] = g.waypoints[g.wpIndex];
-  if (moveToward(g, tx, ty, GUARD_PATROL * g.speedScale, dt, blockers)) {
+  if (moveToward(g, tx, ty, GUARD_PATROL * g.speedScale * boost, dt, blockers)) {
     g.wpIndex = (g.wpIndex + 1) % g.waypoints.length;
     g.pauseLeft = 0.9;
   }

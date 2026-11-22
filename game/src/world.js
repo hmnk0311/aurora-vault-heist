@@ -45,6 +45,7 @@ export function createWorld(nightIndex) {
     workKind: null,
     workLeft: 0,
     haul: 0,
+    lockdown: false,
     message: 'Lift the KEYCARD from the office, then work the LASER TERMINAL.',
     endReason: '',
     laserTrippedAt: -99,
@@ -181,6 +182,12 @@ export function updateWorld(world, input, dt) {
     world.alarm = Math.min(ALARM_MAX, world.alarm + rate * dt);
   } else {
     world.alarm = Math.max(0, world.alarm - ALARM_DRAIN * dt);
+  }
+  // Lockdown watch: past halfway on the meter, patrols speed up.
+  const wasLockdown = world.lockdown;
+  world.lockdown = world.alarm >= ALARM_MAX * 0.55;
+  if (world.lockdown && !wasLockdown) {
+    world.message = 'LOCKDOWN WATCH - the patrols pick up the pace!';
   }
   for (const g of world.guards) updateGuard(g, dt, world);
 

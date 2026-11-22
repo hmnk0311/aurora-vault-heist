@@ -69,6 +69,7 @@ export function buildActors(nightIndex) {
     { x: 330, y: 66, base: 0.5, sweep: 0.9, phase: 0 },
     { x: 600, y: 262, base: 2.6, sweep: 1.1, phase: 2.1 },
     { x: 706, y: 386, base: -1.8, sweep: 0.8, phase: 4.2 },
+    { x: 930, y: 122, base: 2.7, sweep: 0.6, phase: 1.3 },
   ];
   return { guards, cameras };
 }
@@ -82,6 +83,8 @@ export function buildLoot(nightIndex) {
     { id: 'gold2', kind: 'gold', x: 250, y: 455, value: 9000, label: 'GOLD' },
     { id: 'diamond', kind: 'diamond', x: 838, y: 232, value: 50000, label: 'AURORA DIAMOND' },
   ];
+  loot.push({ id: 'painting', kind: 'painting', x: 388, y: 332, value: 12000, label: 'PORTRAIT' });
+  loot.push({ id: 'register', kind: 'cash', x: 152, y: 412, value: 5000, label: 'REGISTER' });
   if (nightIndex >= 1) {
     loot.push({ id: 'cash3', kind: 'cash', x: 690, y: 500, value: 6000, label: 'CASH' });
   }

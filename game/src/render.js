@@ -49,6 +49,35 @@ function drawHud(ctx, world) {
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 12px system-ui, sans-serif';
   ctx.fillText('ALARM', 792, 29);
+  if (world.lockdown) {
+    ctx.fillStyle = '#ff4757';
+    ctx.font = 'bold 11px system-ui, sans-serif';
+    ctx.fillText('LOCKDOWN WATCH', 700, 45);
+  }
+  drawObjectives(ctx, world);
+}
+
+// The job in five steps, always on screen: a first-time viewer can
+// read the whole heist plan off a single screenshot.
+function drawObjectives(ctx, world) {
+  const steps = [
+    ['KEYCARD', world.hasKeycard],
+    ['LASERS', world.lasersOff],
+    ['VAULT', world.vaultOpen],
+    ['DIAMOND', world.hasDiamond],
+    ['GETAWAY', world.state === 'clear'],
+  ];
+  ctx.fillStyle = 'rgba(9,13,28,0.55)';
+  ctx.fillRect(230, 2, 470, 15);
+  ctx.font = 'bold 10px system-ui, sans-serif';
+  let x = 236;
+  steps.forEach(([label, done], i) => {
+    ctx.fillStyle = done ? '#2ed573' : '#8fa3c8';
+    const text = `${done ? '✓' : '▢'} ${label}`;
+    ctx.fillText(text, x, 13);
+    x += ctx.measureText(text).width + 14;
+    void i;
+  });
 }
 
 function drawFloor(ctx, world) {
@@ -129,6 +158,25 @@ function drawFixtures(ctx, world) {
   ctx.fillStyle = '#10162e';
   ctx.font = 'bold 10px system-ui, sans-serif';
   ctx.fillText(world.vaultOpen ? 'OPEN' : 'VAULT', VAULT_DOOR.x - 2, VAULT_DOOR.y + 48);
+  // Set dressing: framed art on the gallery wall, gold piles waiting
+  // inside the vault, and the bank's name over the lobby counter.
+  ctx.fillStyle = '#5b2a86';
+  ctx.fillRect(612, 200, 26, 38);
+  ctx.fillRect(612, 440, 26, 38);
+  ctx.strokeStyle = '#c99a4a';
+  ctx.strokeRect(612, 200, 26, 38);
+  ctx.strokeRect(612, 440, 26, 38);
+  for (const [gx, gy] of [[786, 318], [872, 148], [872, 330]]) {
+    ctx.fillStyle = '#d4af37';
+    ctx.fillRect(gx, gy, 30, 9);
+    ctx.fillRect(gx + 4, gy - 8, 22, 8);
+    ctx.fillRect(gx + 8, gy - 15, 14, 7);
+    ctx.strokeStyle = '#a87f1f';
+    ctx.strokeRect(gx, gy, 30, 9);
+  }
+  ctx.fillStyle = 'rgba(245,215,110,0.5)';
+  ctx.font = 'bold 15px system-ui, sans-serif';
+  ctx.fillText('MERIDIAN TRUST', 96, 318);
   // Laser beam across the vault corridor.
   if (!world.lasersOff) {
     ctx.strokeStyle = '#ff2e4d';
@@ -158,6 +206,15 @@ function drawLoot(ctx, world) {
     } else if (item.kind === 'keycard') {
       ctx.fillStyle = '#ffdd59';
       ctx.fillRect(item.x - 11, item.y - 7, 22, 14);
+    } else if (item.kind === 'painting') {
+      ctx.fillStyle = '#8e44ad';
+      ctx.fillRect(item.x - 14, item.y - 11, 28, 22);
+      ctx.strokeStyle = '#f5d76e';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(item.x - 14, item.y - 11, 28, 22);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#f39c12';
+      ctx.beginPath(); ctx.arc(item.x + 5, item.y - 3, 4, 0, Math.PI * 2); ctx.fill();
     } else if (item.kind === 'gold') {
       ctx.fillStyle = '#f5d76e';
       ctx.fillRect(item.x - 12, item.y - 6, 24, 12);
@@ -201,6 +258,10 @@ function drawActors(ctx, world) {
   for (const d of world.decoys) {
     ctx.fillStyle = '#ffeaa7';
     ctx.beginPath(); ctx.arc(d.x, d.y, 5, 0, Math.PI * 2); ctx.fill();
+    // Sound rings off the coin: you can see what the guards hear.
+    ctx.strokeStyle = 'rgba(255,234,167,0.6)';
+    const ring = 10 + (world.time * 14) % 16;
+    ctx.beginPath(); ctx.arc(d.x, d.y, ring, 0, Math.PI * 2); ctx.stroke();
   }
   for (const c of world.cameras) {
     ctx.fillStyle = c.disabledLeft > 0 ? '#57607e' : '#ff2e4d';
@@ -210,21 +271,47 @@ function drawActors(ctx, world) {
     ctx.fillText('CAM', c.x - 10, c.y - 12);
   }
   for (const g of world.guards) {
-    ctx.fillStyle = g.state === 'chase' ? '#ff4757' : '#ffa502';
+    // Navy uniform, amber vest stripe, cap brim toward his facing:
+    // a guard reads as a guard at a glance, not a token.
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath(); ctx.arc(g.x + 2, g.y + 3, 13, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#46587e';
     ctx.beginPath(); ctx.arc(g.x, g.y, 13, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#10162e';
+    ctx.strokeStyle = g.state === 'chase' ? '#ff4757' : '#ffa502';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    // Head with a navy cap, turned toward his facing.
+    const hx = g.x + Math.cos(g.facing) * 3;
+    const hy = g.y + Math.sin(g.facing) * 3;
+    ctx.fillStyle = '#e8b08a';
+    ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1d2739';
     ctx.beginPath();
-    ctx.arc(g.x + Math.cos(g.facing) * 6, g.y + Math.sin(g.facing) * 6, 4, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.arc(hx, hy, 6, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.lineTo(hx + Math.cos(g.facing) * 8, hy + Math.sin(g.facing) * 8);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ffa502';
+    ctx.fillRect(g.x - 9, g.y + 8, 18, 3);
     if (g.state === 'chase' || g.state === 'search') {
       ctx.fillStyle = '#ff4757';
       ctx.font = 'bold 16px system-ui, sans-serif';
       ctx.fillText('!', g.x - 3, g.y - 20);
+    } else if (g.state === 'investigate' || g.state === 'look') {
+      ctx.fillStyle = '#ffeaa7';
+      ctx.font = 'bold 15px system-ui, sans-serif';
+      ctx.fillText('?', g.x - 4, g.y - 20);
     }
   }
   const p = world.player;
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.arc(p.x + 2, p.y + 3, 13, 0, Math.PI * 2); ctx.fill();
+  // The loot bag on his back: grey when empty, gold once the
+  // diamond is in it - the screenshot tells you how the job is going.
+  ctx.fillStyle = world.hasDiamond ? '#f5d76e' : '#57607e';
+  ctx.fillRect(p.x - Math.cos(p.facing) * 10 - 7, p.y - Math.sin(p.facing) * 10 - 7, 14, 14);
   ctx.fillStyle = p.inVent ? '#48dbfb' : '#eccc68';
-  ctx.beginPath(); ctx.arc(p.x, p.y, 13, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = '#10162e';
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -243,6 +330,14 @@ function drawActors(ctx, world) {
 }
 
 function drawOverlays(ctx, world) {
+  // Danger vignette: the frame itself closes in when the job is hot.
+  if (world.state === 'playing' && (world.seenNow || world.lockdown)) {
+    const pulse = 0.35 + 0.2 * Math.sin(world.time * 6);
+    ctx.strokeStyle = `rgba(255,46,77,${world.seenNow ? pulse : 0.3})`;
+    ctx.lineWidth = 10;
+    ctx.strokeRect(5, 5, VIEW_W - 10, VIEW_H - HUD_H - 10);
+    ctx.lineWidth = 1;
+  }
   ctx.fillStyle = 'rgba(9,13,28,0.88)';
   ctx.fillRect(0, VIEW_H - HUD_H - 30, VIEW_W, 30);
   ctx.fillStyle = '#e8ecf8';
